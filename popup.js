@@ -1,9 +1,11 @@
-﻿const THEME_MAP_KEY = "nightModeByUrl";
+const THEME_MAP_KEY = "nightModeByUrl";
 const SETTINGS_KEY = "nightModeSettings";
 const SETTINGS_VERSION = 3;
 
 const MAX_THEME_INTENSITY = 500;
 const INTENSITY_CAP_OPTIONS = [200, 300, 400, 500];
+const MAX_SAVED_URLS = 1000;
+const THEME_PERSIST_DEBOUNCE_MS = 160;
 
 const PRESET_COLORS = {
   warm: "#FFCC66",
@@ -187,58 +189,219 @@ const I18N = {
   },
   es: {
     ...EN_STRINGS,
-    mode_per_page: "Por pagina",
+    logo_aria: "Logo y nombre de la aplicación",
+    settings_open_title: "Abrir configuración",
+    settings_close_title: "Cerrar configuración",
+    apply_mode_legend: "Modo de aplicación",
+    mode_per_page: "Por página",
     mode_all_pages: "Todas",
     enable_this_url: "Activar en esta URL",
     intensity_label: "Intensidad",
-    color_warm: "Amarillada",
-    color_custom: "Personalizada",
-    settings_title: "Configuracion",
+    color_title: "Color",
+    color_warm: "Cálido",
+    color_blue: "Azul",
+    color_custom: "Personalizado",
+    picker_label: "Selector",
+    hex_label: "Hex",
+    settings_title: "Configuración",
     settings_language_title: "Idioma",
+    settings_language_selector_label: "Idioma",
     settings_language_default_prefix: "Predeterminado",
+    settings_intensity_title: "Intensidad máxima",
+    settings_intensity_cap_label: "Límite superior",
+    settings_schedule_title: "Horario de activación",
+    settings_schedule_enabled_label: "Activar programación",
+    settings_schedule_start_label: "Inicio",
+    settings_schedule_end_label: "Fin",
+    settings_tab_general: "General",
+    settings_tab_profiles: "Perfiles",
+    settings_tab_data: "Archivo",
+    settings_tab_accessibility: "Accesibilidad",
+    settings_a11y_title: "Accesibilidad",
+    settings_a11y_desc: "Protecciones siempre activas en todas las páginas compatibles.",
+    settings_a11y_reduce_motion: "Reducir movimiento",
+    settings_a11y_soften_brightness: "Suavizar brillo",
+    settings_a11y_reduce_saturation: "Reducir colores intensos",
+    settings_a11y_flash_mitigation: "Mitigar destellos",
     settings_profiles_title: "Perfiles locales",
+    profile_name_placeholder: "Mi ajuste",
+    profile_select_label: "Perfiles guardados",
+    profile_select_empty: "Sin perfiles guardados",
     profile_save_button: "Guardar",
+    profile_apply_button: "Aplicar",
     profile_delete_button: "Eliminar",
+    profile_empty: "Sin perfiles guardados.",
+    settings_file_title: "Archivo",
     file_export_button: "Exportar .txt",
     file_import_button: "Importar .txt",
-    locale_name_en: "Ingles",
-    locale_name_es: "Espanol",
-    locale_name_fr: "Frances",
-    locale_name_de: "Aleman"
+    settings_reset_title: "Restablecer",
+    reset_button: "Restablecer ajustes guardados",
+    locale_name_pt_br: "Portugués (Brasil)",
+    locale_name_en: "Inglés",
+    locale_name_es: "Español",
+    locale_name_fr: "Francés",
+    locale_name_de: "Alemán",
+    status_popup_load_failed: "No se pudo cargar la ventana emergente.",
+    status_invalid_tab: "Pestaña activa no válida.",
+    status_unsupported_page: "Esta página no permite extensiones (chrome://, edge://, Web Store, etc.).",
+    status_apply_failed: "No se pudo aplicar en esta pestaña ahora.",
+    status_remove_failed: "No se pudo quitar de esta pestaña ahora.",
+    status_reset_done: "La configuración se restableció correctamente.",
+    status_reset_failed: "No se pudo restablecer la configuración.",
+    status_profile_saved: "Perfil guardado.",
+    status_profile_deleted: "Perfil eliminado.",
+    status_profile_applied: "Perfil aplicado.",
+    status_profile_name_required: "Escribe un nombre para el perfil.",
+    status_export_done: "Archivo exportado correctamente.",
+    status_export_failed: "No se pudo exportar el archivo.",
+    status_import_done: "Archivo importado correctamente.",
+    status_import_failed: "No se pudo importar el archivo.",
+    status_import_invalid: "Archivo no válido para importar.",
+    status_import_no_file: "Selecciona un archivo para importar."
   },
   fr: {
     ...EN_STRINGS,
+    logo_aria: "Logo et nom de l'application",
+    settings_open_title: "Ouvrir les paramètres",
+    settings_close_title: "Fermer les paramètres",
+    apply_mode_legend: "Mode d'application",
     mode_per_page: "Par page",
     mode_all_pages: "Toutes",
     enable_this_url: "Activer sur cette URL",
-    intensity_label: "Intensite",
-    color_custom: "Personnalisee",
-    settings_title: "Parametres",
+    intensity_label: "Intensité",
+    color_title: "Couleur",
+    color_warm: "Chaude",
+    color_blue: "Bleue",
+    color_custom: "Personnalisée",
+    picker_label: "Sélecteur",
+    hex_label: "Hex",
+    settings_title: "Paramètres",
     settings_language_title: "Langue",
-    settings_language_default_prefix: "Par defaut",
+    settings_language_selector_label: "Langue",
+    settings_language_default_prefix: "Par défaut",
+    settings_intensity_title: "Intensité maximale",
+    settings_intensity_cap_label: "Limite supérieure",
+    settings_schedule_title: "Plage horaire d'activation",
+    settings_schedule_enabled_label: "Activer la programmation",
+    settings_schedule_start_label: "Début",
+    settings_schedule_end_label: "Fin",
+    settings_tab_general: "Général",
+    settings_tab_profiles: "Profils",
+    settings_tab_data: "Fichier",
+    settings_tab_accessibility: "Accessibilité",
+    settings_a11y_title: "Accessibilité",
+    settings_a11y_desc: "Protections permanentes appliquées à chaque page compatible.",
+    settings_a11y_reduce_motion: "Réduire les mouvements",
+    settings_a11y_soften_brightness: "Adoucir la luminosité",
+    settings_a11y_reduce_saturation: "Réduire les couleurs vives",
+    settings_a11y_flash_mitigation: "Atténuer les flashs",
+    settings_profiles_title: "Profils locaux",
+    profile_name_placeholder: "Mon préréglage",
+    profile_select_label: "Profils enregistrés",
+    profile_select_empty: "Aucun profil enregistré",
     profile_save_button: "Enregistrer",
+    profile_apply_button: "Appliquer",
     profile_delete_button: "Supprimer",
+    profile_empty: "Aucun profil enregistré.",
+    settings_file_title: "Fichier",
+    file_export_button: "Exporter .txt",
+    file_import_button: "Importer .txt",
+    settings_reset_title: "Réinitialiser",
+    reset_button: "Réinitialiser les paramètres",
+    locale_name_pt_br: "Portugais (Brésil)",
     locale_name_en: "Anglais",
     locale_name_es: "Espagnol",
-    locale_name_fr: "Francais",
-    locale_name_de: "Allemand"
+    locale_name_fr: "Français",
+    locale_name_de: "Allemand",
+    status_popup_load_failed: "Impossible de charger la fenêtre.",
+    status_invalid_tab: "Onglet actif non valide.",
+    status_unsupported_page: "Cette page n'autorise pas les extensions (chrome://, edge://, Web Store, etc.).",
+    status_apply_failed: "Impossible d'appliquer à cet onglet pour le moment.",
+    status_remove_failed: "Impossible de retirer de cet onglet pour le moment.",
+    status_reset_done: "Les paramètres ont été réinitialisés.",
+    status_reset_failed: "Impossible de réinitialiser les paramètres.",
+    status_profile_saved: "Profil enregistré.",
+    status_profile_deleted: "Profil supprimé.",
+    status_profile_applied: "Profil appliqué.",
+    status_profile_name_required: "Saisissez un nom de profil.",
+    status_export_done: "Fichier exporté avec succès.",
+    status_export_failed: "Impossible d'exporter le fichier.",
+    status_import_done: "Fichier importé avec succès.",
+    status_import_failed: "Impossible d'importer le fichier.",
+    status_import_invalid: "Fichier non valide pour l'importation.",
+    status_import_no_file: "Choisissez un fichier à importer."
   },
   de: {
     ...EN_STRINGS,
+    logo_aria: "App-Logo und Name",
+    settings_open_title: "Einstellungen öffnen",
+    settings_close_title: "Einstellungen schließen",
+    apply_mode_legend: "Anwendungsmodus",
     mode_per_page: "Pro Seite",
     mode_all_pages: "Alle",
     enable_this_url: "Auf dieser URL aktivieren",
-    intensity_label: "Intensitat",
+    intensity_label: "Intensität",
+    color_title: "Farbe",
+    color_warm: "Warm",
+    color_blue: "Blau",
     color_custom: "Benutzerdefiniert",
+    picker_label: "Farbwähler",
+    hex_label: "Hex",
     settings_title: "Einstellungen",
     settings_language_title: "Sprache",
+    settings_language_selector_label: "Sprache",
     settings_language_default_prefix: "Standard",
+    settings_intensity_title: "Maximale Intensität",
+    settings_intensity_cap_label: "Obergrenze",
+    settings_schedule_title: "Aktivierungszeitplan",
+    settings_schedule_enabled_label: "Zeitplan aktivieren",
+    settings_schedule_start_label: "Start",
+    settings_schedule_end_label: "Ende",
+    settings_tab_general: "Allgemein",
+    settings_tab_profiles: "Profile",
+    settings_tab_data: "Datei",
+    settings_tab_accessibility: "Barrierefreiheit",
+    settings_a11y_title: "Barrierefreiheit",
+    settings_a11y_desc: "Dauerhafte Schutzfunktionen für alle unterstützten Seiten.",
+    settings_a11y_reduce_motion: "Bewegung reduzieren",
+    settings_a11y_soften_brightness: "Helligkeit dämpfen",
+    settings_a11y_reduce_saturation: "Starke Farben reduzieren",
+    settings_a11y_flash_mitigation: "Lichtblitze mindern",
+    settings_profiles_title: "Lokale Profile",
+    profile_name_placeholder: "Mein Preset",
+    profile_select_label: "Gespeicherte Profile",
+    profile_select_empty: "Keine gespeicherten Profile",
     profile_save_button: "Speichern",
-    profile_delete_button: "Loschen",
+    profile_apply_button: "Anwenden",
+    profile_delete_button: "Löschen",
+    profile_empty: "Keine gespeicherten Profile.",
+    settings_file_title: "Datei",
+    file_export_button: ".txt exportieren",
+    file_import_button: ".txt importieren",
+    settings_reset_title: "Zurücksetzen",
+    reset_button: "Gespeicherte Optionen zurücksetzen",
+    locale_name_pt_br: "Portugiesisch (Brasilien)",
     locale_name_en: "Englisch",
     locale_name_es: "Spanisch",
-    locale_name_fr: "Franzosisch",
-    locale_name_de: "Deutsch"
+    locale_name_fr: "Französisch",
+    locale_name_de: "Deutsch",
+    status_popup_load_failed: "Popup konnte nicht geladen werden.",
+    status_invalid_tab: "Ungültiger aktiver Tab.",
+    status_unsupported_page: "Diese Seite erlaubt keine Erweiterungen (chrome://, edge://, Web Store usw.).",
+    status_apply_failed: "Konnte auf diesem Tab momentan nicht angewendet werden.",
+    status_remove_failed: "Konnte von diesem Tab momentan nicht entfernt werden.",
+    status_reset_done: "Einstellungen wurden erfolgreich zurückgesetzt.",
+    status_reset_failed: "Einstellungen konnten nicht zurückgesetzt werden.",
+    status_profile_saved: "Profil gespeichert.",
+    status_profile_deleted: "Profil gelöscht.",
+    status_profile_applied: "Profil angewendet.",
+    status_profile_name_required: "Bitte einen Profilnamen eingeben.",
+    status_export_done: "Datei erfolgreich exportiert.",
+    status_export_failed: "Datei konnte nicht exportiert werden.",
+    status_import_done: "Datei erfolgreich importiert.",
+    status_import_failed: "Datei konnte nicht importiert werden.",
+    status_import_invalid: "Ungültige Datei für den Import.",
+    status_import_no_file: "Bitte eine Datei zum Importieren auswählen."
   }
 };
 
@@ -290,6 +453,10 @@ let isUiInitialized = false;
 let activeLocale = "en";
 let activeSettingsTab = "general";
 let settingsTabAnimationToken = 0;
+let livePreviewFrameId = null;
+let pendingPreviewConfig = null;
+let themePersistTimerId = null;
+let pendingThemePersistenceTask = null;
 
 const prefersReducedMotion =
   typeof window !== "undefined" &&
@@ -372,14 +539,22 @@ function attachEventListeners() {
     await onPerPageToggleChanged(Boolean(elements.enabledToggle.checked));
   });
 
-  elements.intensityRange?.addEventListener("input", async () => {
+  elements.intensityRange?.addEventListener("input", () => {
     updateSliderVisualState({ animateValuePulse: true });
 
     if (suspendHandlers || !isSupportedPage) {
       return;
     }
 
-    await handleThemeControlChange();
+    handleThemeControlLiveInput();
+  });
+
+  elements.intensityRange?.addEventListener("change", async () => {
+    if (suspendHandlers || !isSupportedPage) {
+      return;
+    }
+
+    await flushPendingThemePersistence();
   });
 
   for (const radio of elements.colorRadios) {
@@ -395,7 +570,7 @@ function attachEventListeners() {
     });
   }
 
-  elements.customColorPicker?.addEventListener("input", async () => {
+  elements.customColorPicker?.addEventListener("input", () => {
     const normalizedHex = normalizeHex(elements.customColorPicker.value);
     if (!normalizedHex) {
       return;
@@ -409,10 +584,18 @@ function attachEventListeners() {
       return;
     }
 
-    await handleThemeControlChange();
+    handleThemeControlLiveInput();
   });
 
-  elements.customColorHex?.addEventListener("input", async () => {
+  elements.customColorPicker?.addEventListener("change", async () => {
+    if (suspendHandlers || !isSupportedPage || getSelectedColorMode() !== "custom") {
+      return;
+    }
+
+    await flushPendingThemePersistence();
+  });
+
+  elements.customColorHex?.addEventListener("input", () => {
     const normalizedHex = normalizeHex(elements.customColorHex.value);
 
     if (!normalizedHex) {
@@ -429,7 +612,11 @@ function attachEventListeners() {
       return;
     }
 
-    await handleThemeControlChange();
+    handleThemeControlLiveInput();
+  });
+
+  window.addEventListener("pagehide", () => {
+    void flushPendingThemePersistence();
   });
 
   elements.customColorHex?.addEventListener("blur", () => {
@@ -546,7 +733,86 @@ async function onPerPageToggleChanged(enabled) {
   await sendRemoveMessage();
 }
 
+function handleThemeControlLiveInput() {
+  const preset = buildPresetFromUI();
+
+  if (currentApplyMode === "global") {
+    currentSettings = sanitizeSettings({
+      ...currentSettings,
+      mode: "global",
+      globalPreset: preset
+    });
+
+    scheduleLiveThemePreview({ ...preset, enabled: true });
+    scheduleThemePersistence(() => persistSettings(currentSettings));
+    return;
+  }
+
+  const activeUrlConfig = getCurrentUrlEnabledConfig();
+  if (activeUrlConfig && currentUrlKey) {
+    const config = { ...preset, enabled: true, updatedAt: Date.now() };
+    themeMapCache[currentUrlKey] = sanitizeThemeConfig(config, normalizeIntensityCap(currentSettings.intensityCap));
+
+    scheduleLiveThemePreview(config);
+    scheduleThemePersistence(() => persistThemeMap(themeMapCache));
+    return;
+  }
+
+  currentSettings = sanitizeSettings({
+    ...currentSettings,
+    mode: "per_page",
+    perPagePreset: preset
+  });
+  scheduleThemePersistence(() => persistSettings(currentSettings));
+}
+
+function scheduleLiveThemePreview(themeConfig) {
+  pendingPreviewConfig = themeConfig;
+  if (typeof livePreviewFrameId === "number") {
+    return;
+  }
+
+  livePreviewFrameId = requestAnimationFrame(() => {
+    livePreviewFrameId = null;
+    const configToApply = pendingPreviewConfig;
+    pendingPreviewConfig = null;
+    if (configToApply) {
+      void sendApplyMessage(configToApply);
+    }
+  });
+}
+
+function scheduleThemePersistence(task) {
+  pendingThemePersistenceTask = task;
+  if (typeof themePersistTimerId === "number") {
+    clearTimeout(themePersistTimerId);
+  }
+
+  themePersistTimerId = window.setTimeout(() => {
+    themePersistTimerId = null;
+    const currentTask = pendingThemePersistenceTask;
+    pendingThemePersistenceTask = null;
+    if (typeof currentTask === "function") {
+      void currentTask();
+    }
+  }, THEME_PERSIST_DEBOUNCE_MS);
+}
+
+async function flushPendingThemePersistence() {
+  if (typeof themePersistTimerId === "number") {
+    clearTimeout(themePersistTimerId);
+    themePersistTimerId = null;
+  }
+
+  const currentTask = pendingThemePersistenceTask;
+  pendingThemePersistenceTask = null;
+  if (typeof currentTask === "function") {
+    await currentTask();
+  }
+}
+
 async function handleThemeControlChange() {
+  await flushPendingThemePersistence();
   const preset = buildPresetFromUI();
 
   if (currentApplyMode === "global") {
@@ -1139,10 +1405,12 @@ async function saveCurrentProfile() {
 
 function buildProfileBundle() {
   return {
+    mode: normalizeApplyMode(currentSettings.mode),
     perPagePreset: sanitizePreset(currentSettings.perPagePreset),
     globalPreset: sanitizePreset(currentSettings.globalPreset),
     intensityCap: normalizeIntensityCap(currentSettings.intensityCap),
     schedule: sanitizeSchedule(currentSettings.schedule),
+    accessibility: sanitizeAccessibility(currentSettings.accessibility),
     localeMode: normalizeLocaleMode(currentSettings.localeMode),
     manualLocale: normalizeSupportedLocale(currentSettings.manualLocale)
   };
@@ -1158,10 +1426,12 @@ async function applyProfileById(profileId) {
 
   await persistSettings({
     ...currentSettings,
+    mode: bundle.mode,
     perPagePreset: bundle.perPagePreset,
     globalPreset: bundle.globalPreset,
     intensityCap: bundle.intensityCap,
     schedule: bundle.schedule,
+    accessibility: bundle.accessibility,
     localeMode: bundle.localeMode,
     manualLocale: bundle.manualLocale
   });
@@ -1488,16 +1758,21 @@ function sanitizeThemeMap(rawThemeMap) {
     return {};
   }
 
-  const normalized = {};
+  const entries = [];
   for (const [urlKey, rawConfig] of Object.entries(rawThemeMap)) {
     if (typeof urlKey !== "string" || !urlKey) {
       continue;
     }
 
-    normalized[urlKey] = sanitizeThemeConfig(rawConfig);
+    entries.push([urlKey, sanitizeThemeConfig(rawConfig)]);
   }
 
-  return normalized;
+  if (entries.length > MAX_SAVED_URLS) {
+    entries.sort((a, b) => (b[1].updatedAt || 0) - (a[1].updatedAt || 0));
+    entries.length = MAX_SAVED_URLS;
+  }
+
+  return Object.fromEntries(entries);
 }
 
 function sanitizeSettings(rawSettings) {
@@ -1578,10 +1853,12 @@ function sanitizeProfile(rawProfile) {
 function sanitizeProfileBundle(rawBundle) {
   const bundle = rawBundle && typeof rawBundle === "object" ? rawBundle : {};
   return {
+    mode: normalizeApplyMode(bundle.mode),
     perPagePreset: sanitizePreset(bundle.perPagePreset),
     globalPreset: sanitizePreset(bundle.globalPreset),
     intensityCap: normalizeIntensityCap(bundle.intensityCap),
     schedule: sanitizeSchedule(bundle.schedule),
+    accessibility: sanitizeAccessibility(bundle.accessibility),
     localeMode: normalizeLocaleMode(bundle.localeMode),
     manualLocale: normalizeSupportedLocale(bundle.manualLocale)
   };
@@ -1715,8 +1992,12 @@ function normalizeSupportedLocale(rawLocale) {
 }
 
 function normalizeUrlKey(rawUrl) {
-  const parsed = new URL(rawUrl);
-  return `${parsed.origin}${parsed.pathname}${parsed.search}`;
+  try {
+    const parsed = new URL(rawUrl);
+    return `${parsed.origin}${parsed.pathname}${parsed.search}`;
+  } catch (_error) {
+    return "";
+  }
 }
 
 function normalizeHex(value) {

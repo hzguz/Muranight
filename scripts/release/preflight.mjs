@@ -19,8 +19,10 @@ const RUNTIME_REQUIRED_FILES = [
   "icons/icon-48.png",
   "icons/icon-128.png",
   "src/logo.svg",
-  "src/fonts/manrope-400.woff2",
-  "src/fonts/manrope-700.woff2"
+  "src/fonts/open-sans-latin-400.woff2",
+  "src/fonts/open-sans-latin-700.woff2",
+  "src/fonts/open-sans-latin-ext-400.woff2",
+  "src/fonts/open-sans-latin-ext-700.woff2"
 ];
 
 const CODE_SCAN_FILES = ["popup.html", "popup.js", "content.js"];

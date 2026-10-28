@@ -1,2 +1,9 @@
 node_modules/
 .release/
+*.zip
+.env
+.env.*
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

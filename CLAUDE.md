@@ -48,6 +48,7 @@ The `suspendHandlers` flag prevents re-entrant storage writes while the popup is
   globalPreset: { intensity, colorMode, customColor, updatedAt },
   intensityCap: 200 | 300 | 400 | 500,
   schedule: { enabled, startTime, endTime },
+  accessibility: { reduceMotion, softenBrightness, reduceSaturation, flashMitigation },
   localeMode: "auto" | "manual",
   manualLocale: "en" | "pt-BR" | "es" | "fr" | "de",
   profiles: [{ id, name, bundle, createdAt, updatedAt }]

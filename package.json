@@ -3,7 +3,12 @@
   "version": "1.0.0",
   "description": "Extensao MV3 para aplicar modo noturno por URL exata (`origin + pathname + search`, ignorando `hash`) ou globalmente.",
   "main": "content.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hzguz/muranight.git"
+  },
   "scripts": {
+    "test": "node --test ./tests/extension.test.mjs",
     "build:css": "tailwindcss -i ./src/popup.tailwind.css -o ./popup.css --minify",
     "watch:css": "tailwindcss -i ./src/popup.tailwind.css -o ./popup.css --watch",
     "release:preflight": "node ./scripts/release/preflight.mjs",
@@ -11,13 +16,18 @@
     "release": "npm run release:preflight && npm run release:zip",
     "release:mark-submitted": "node ./scripts/release/mark-submitted.mjs"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "chrome-extension",
+    "edge-extension",
+    "manifest-v3",
+    "night-mode",
+    "dark-mode",
+    "accessibility"
+  ],
+  "author": "Gustavo (hzguz)",
+  "license": "MIT",
   "type": "commonjs",
   "devDependencies": {
-    "@fontsource/open-sans": "^5.2.7",
-    "sharp": "^0.34.5",
     "tailwindcss": "^3.4.17"
   }
 }

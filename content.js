@@ -1,4 +1,4 @@
-﻿const THEME_MAP_KEY = "nightModeByUrl";
+const THEME_MAP_KEY = "nightModeByUrl";
 const SETTINGS_KEY = "nightModeSettings";
 const TINT_OVERLAY_ID = "mn-night-overlay";
 const DIM_OVERLAY_ID = "mn-night-dim-overlay";
@@ -54,6 +54,8 @@ const PREFERS_REDUCED_MOTION =
 
 let scheduleRecheckTimerId = null;
 let mediaPauseObserver = null;
+let cachedSettings = null;
+let lastResolvedUrlKey = null;
 const overlayRevealFrameById = new Map();
 const overlayRemovalTimerById = new Map();
 const overlayRemovalTokenById = new Map();
@@ -84,6 +86,10 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
     return;
   }
 
+  if (changes[SETTINGS_KEY]) {
+    cachedSettings = sanitizeSettings(changes[SETTINGS_KEY].newValue);
+  }
+
   initializeFromStorage().catch(() => {
     clearScheduleRecheckTimer();
     removeOverlay();
@@ -95,20 +101,41 @@ initializeFromStorage().catch(() => {
   removeOverlay();
 });
 
+document.addEventListener("fullscreenchange", syncOverlaysWithFullscreenHost);
+window.addEventListener("popstate", handlePotentialUrlChange);
+window.addEventListener("yt-navigate-finish", handlePotentialUrlChange);
+if (typeof window !== "undefined" && window.navigation && typeof window.navigation.addEventListener === "function") {
+  window.navigation.addEventListener("navigatesuccess", handlePotentialUrlChange);
+}
+
 window.addEventListener("beforeunload", () => {
   clearScheduleRecheckTimer();
   clearOverlayRemovalTimers();
   disconnectMediaPauseObserver();
 });
 
+function handlePotentialUrlChange() {
+  const currentUrlKey = normalizeUrlKey(window.location.href);
+  if (!currentUrlKey || currentUrlKey === lastResolvedUrlKey) {
+    return;
+  }
+
+  initializeFromStorage().catch(() => {
+    clearScheduleRecheckTimer();
+    removeOverlay();
+  });
+}
+
 async function initializeFromStorage() {
   const settings = await readSettings();
+  cachedSettings = settings;
+  lastResolvedUrlKey = normalizeUrlKey(window.location.href);
 
   // Accessibility is a personal, always-on need: apply it before (and
   // independently of) the night overlay, regardless of mode/schedule.
   applyAccessibility(sanitizeAccessibility(settings.accessibility));
 
-  const { theme, schedule } = await resolveThemeForCurrentPage();
+  const { theme, schedule } = await resolveThemeForCurrentPage(settings);
   scheduleNextRecheck(schedule);
 
   if (!theme) {
@@ -121,7 +148,8 @@ async function initializeFromStorage() {
 
 async function applyThemeFromMessage(rawThemeConfig, sendResponse) {
   try {
-    const settings = await readSettings();
+    const settings = cachedSettings || (await readSettings());
+    cachedSettings = settings;
     const schedule = sanitizeSchedule(settings.schedule);
     scheduleNextRecheck(schedule);
 
@@ -139,8 +167,8 @@ async function applyThemeFromMessage(rawThemeConfig, sendResponse) {
   }
 }
 
-async function resolveThemeForCurrentPage() {
-  const [themeMap, settings] = await Promise.all([readThemeMap(), readSettings()]);
+async function resolveThemeForCurrentPage(preloadedSettings = null) {
+  const settings = preloadedSettings || (await readSettings());
   const intensityCap = normalizeIntensityCap(settings.intensityCap);
   const schedule = sanitizeSchedule(settings.schedule);
 
@@ -156,14 +184,17 @@ async function resolveThemeForCurrentPage() {
   }
 
   const urlKey = normalizeUrlKey(window.location.href);
-  const savedConfig = themeMap[urlKey];
+  if (!urlKey) {
+    return { theme: null, schedule };
+  }
 
+  const savedConfig = await readThemeForUrl(urlKey, intensityCap);
   if (!savedConfig || !savedConfig.enabled) {
     return { theme: null, schedule };
   }
 
   return {
-    theme: sanitizeThemeConfig(savedConfig, intensityCap),
+    theme: savedConfig,
     schedule
   };
 }
@@ -301,8 +332,33 @@ function removeOverlay() {
   }
 }
 
+function getOverlayHost() {
+  if (document.fullscreenElement && document.fullscreenElement instanceof HTMLElement) {
+    return document.fullscreenElement;
+  }
+  return document.documentElement;
+}
+
+function syncOverlaysWithFullscreenHost() {
+  const host = getOverlayHost();
+  if (!host) {
+    return;
+  }
+
+  const dimOverlay = document.getElementById(DIM_OVERLAY_ID);
+  const tintOverlay = document.getElementById(TINT_OVERLAY_ID);
+
+  if (dimOverlay && dimOverlay.parentElement !== host) {
+    host.appendChild(dimOverlay);
+  }
+
+  if (tintOverlay && tintOverlay.parentElement !== host) {
+    host.appendChild(tintOverlay);
+  }
+}
+
 function appendOverlayToRoot(overlay) {
-  const root = document.documentElement;
+  const root = getOverlayHost();
   if (root) {
     root.appendChild(overlay);
     return;
@@ -311,8 +367,9 @@ function appendOverlayToRoot(overlay) {
   window.addEventListener(
     "DOMContentLoaded",
     () => {
-      if (!overlay.isConnected && document.documentElement) {
-        document.documentElement.appendChild(overlay);
+      const targetRoot = getOverlayHost();
+      if (!overlay.isConnected && targetRoot) {
+        targetRoot.appendChild(overlay);
       }
     },
     { once: true }
@@ -321,8 +378,9 @@ function appendOverlayToRoot(overlay) {
 
 function setOverlayOpacity(overlay, opacity) {
   const targetOpacity = String(opacity);
+  const isInitialLoad = document.readyState === "loading";
 
-  if (PREFERS_REDUCED_MOTION) {
+  if (PREFERS_REDUCED_MOTION || isInitialLoad) {
     overlay.style.opacity = targetOpacity;
     overlay.dataset.mnRevealReady = "1";
     return;
@@ -751,6 +809,25 @@ function isWithinSchedule(now, schedule) {
   return currentMinutes >= startMinutes || currentMinutes < endMinutes;
 }
 
+async function readThemeForUrl(urlKey, intensityCap = MAX_THEME_INTENSITY) {
+  if (!urlKey) {
+    return null;
+  }
+
+  const raw = await chrome.storage.local.get(THEME_MAP_KEY);
+  const rawMap = raw && raw[THEME_MAP_KEY];
+  if (!rawMap || typeof rawMap !== "object" || Array.isArray(rawMap)) {
+    return null;
+  }
+
+  const rawEntry = rawMap[urlKey];
+  if (!rawEntry || typeof rawEntry !== "object") {
+    return null;
+  }
+
+  return sanitizeThemeConfig(rawEntry, intensityCap);
+}
+
 async function readThemeMap() {
   const raw = await chrome.storage.local.get(THEME_MAP_KEY);
   return asThemeMap(raw[THEME_MAP_KEY]);
@@ -905,8 +982,12 @@ function isValidTimeString(value) {
 }
 
 function normalizeUrlKey(rawUrl) {
-  const parsed = new URL(rawUrl);
-  return `${parsed.origin}${parsed.pathname}${parsed.search}`;
+  try {
+    const parsed = new URL(rawUrl);
+    return `${parsed.origin}${parsed.pathname}${parsed.search}`;
+  } catch (_error) {
+    return "";
+  }
 }
 
 function asThemeMap(value) {
