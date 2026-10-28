@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="banner-muranight.png" alt="MuraNight Banner" width="100%" />
+</p>
+
 # MuraNight (Chrome & Microsoft Edge)
 
 A lightweight, zero-dependency Manifest V3 browser extension that applies a customizable night-mode tint/dim overlay and accessibility protections to web pages, either per exact URL (`origin + pathname + search`, ignoring `hash`) or globally.
