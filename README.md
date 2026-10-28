@@ -1,64 +1,68 @@
-# MuraNight (Chrome + Edge)
+# MuraNight (Chrome & Microsoft Edge)
 
-Extensão Manifest V3 para aplicar filtro de conforto visual e modo noturno por URL exata (`origin + pathname + search`, ignorando `hash`) ou globalmente em todas as páginas compatíveis.
+A lightweight, zero-dependency Manifest V3 browser extension that applies a customizable night-mode tint/dim overlay and accessibility protections to web pages, either per exact URL (`origin + pathname + search`, ignoring `hash`) or globally.
 
-## Recursos Principais
+## Features
 
-- **2 modos de aplicação**:
-  - **Por página**: ativação independente por URL exata (com suporte a navegação SPA).
-  - **Todas as páginas**: aplicação global automática.
-- **Intensidade contínua e Boost**:
-  - Controle em tempo real de `0%` até `200%` (expansível até `500%` nas configurações) combinando camada de matiz (`multiply`) e camada de escurecimento (`dim`).
-- **3 modos de cor**:
-  - **Amarelada (Warm)**, **Azul (Blue)** e **Personalizada (Custom)** com seletor visual e código HEX.
-- **Agendamento de horário**:
-  - Ativação e desativação automáticas dentro da janela de horário configurada.
-- **Acessibilidade (Sempre Ativa)**:
-  - Reduzir movimento (transições/animações e vídeos em autoplay), suavizar brilho, reduzir cores fortes e mitigar flashes.
-- **Perfis locais e Backup**:
-  - Criação e aplicação rápida de perfis locais, além de exportação/importação de configurações em arquivo `.txt`/`.json`.
-- **Multilíngue**:
-  - Interface traduzida para Português (Brasil), Inglês, Espanhol, Francês e Alemão (detecção automática ou seleção manual).
-- **Suporte a Tela Cheia (Fullscreen)**:
-  - O filtro acompanha vídeos e elementos em tela cheia automaticamente.
+- **Two Application Modes**:
+  - **Per Page**: Independent activation per exact URL (including automatic SPA navigation tracking).
+  - **All Pages**: Automatic global application across all supported websites.
+- **Real-Time Intensity & Boost**:
+  - Smooth control from `0%` up to `200%` (expandable up to `500%` in Settings) combining a color tint layer (`mix-blend-mode: multiply`) and a dimming layer.
+- **Three Color Modes**:
+  - **Warm**, **Blue**, and **Custom** (with live color picker and HEX input).
+- **Activation Schedule**:
+  - Automatically enables and disables night mode within a configurable daily time window.
+- **Always-On Accessibility Protections**:
+  - Reduce motion (clamps CSS transitions/animations and pauses autoplay videos), soften brightness, reduce strong colors, and mitigate flashes.
+- **Local Profiles & Backup**:
+  - Save, apply, and delete local presets, or export/import all settings and per-URL configurations as a `.txt` / `.json` file.
+- **Multi-Language UI**:
+  - Built-in localization for English, Portuguese (Brazil), Spanish, French, and German (automatic browser detection or manual selection).
+- **Fullscreen Support**:
+  - Automatically keeps the night-mode overlay active when videos or page elements enter fullscreen mode.
 
-## Desenvolvimento e Build (Tailwind CSS)
+## Development & Build (Tailwind CSS)
 
-- Fonte de estilos: [`src/popup.tailwind.css`](src/popup.tailwind.css)
-- Saída compilada: [`popup.css`](popup.css)
+- Source stylesheet: [`src/popup.tailwind.css`](src/popup.tailwind.css)
+- Compiled output: [`popup.css`](popup.css)
 
 ```bash
-# Instalar dependências de desenvolvimento
+# Install development dependencies
 npm install
 
-# Compilar CSS minificado do popup
+# Run unit and regression tests
+npm test
+
+# Compile minified popup CSS
 npm run build:css
 
-# Modo watch durante ajustes de UI
+# Watch mode during UI development
 npm run watch:css
 
-# Executar verificações pré-publicação (Chrome Web Store)
+# Run Chrome Web Store pre-release checks
 npm run release:preflight
 
-# Gerar pacote .zip limpo em .release/
+# Package runtime files into .release/muranight-v<version>.zip
 npm run release
 ```
 
-## Como carregar localmente no Chrome / Edge
+## Loading Unpacked in Chrome / Edge
 
-1. Abra `chrome://extensions` (ou `edge://extensions`).
-2. Ative o **Modo do desenvolvedor**.
-3. Clique em **Carregar sem compactação** (*Load unpacked*).
-4. Selecione a pasta raiz deste projeto (`muranight`).
+1. Open `chrome://extensions` (or `edge://extensions`).
+2. Enable **Developer mode**.
+3. Click **Load unpacked**.
+4. Select the root folder of this repository (`muranight`).
 
-## Estrutura Principal
+## Project Structure
 
-- `manifest.json` — Configuração Manifest V3 da extensão
-- `content.js` — Script injetado em `document_start` (overlays, agendamento, acessibilidade e fullscreen)
-- `popup.html` / `popup.js` / `popup.css` — Interface de controle e gerenciamento de estado
-- `src/popup.tailwind.css` — Estilos fonte Tailwind CSS e `@font-face` locais (`Open Sans`)
-- `scripts/release/` — Scripts de validação (`preflight.mjs`) e empacotamento (`package.mjs`)
+- `manifest.json` — Manifest V3 extension configuration
+- `content.js` — Content script injected at `document_start` (overlays, schedule timer, accessibility filters, and fullscreen/SPA tracking)
+- `popup.html` / `popup.js` / `popup.css` — Popup UI and state management
+- `src/popup.tailwind.css` — Tailwind CSS source and local `Open Sans` `@font-face` declarations
+- `scripts/release/` — Pre-release validation (`preflight.mjs`), packaging (`package.mjs`), and version tracking (`mark-submitted.mjs`)
+- `tests/` — Automated test suite (`extension.test.mjs`)
 
-## Licença
+## License
 
-Distribuído sob a licença [MIT](LICENSE).
+Distributed under the [MIT License](LICENSE).
